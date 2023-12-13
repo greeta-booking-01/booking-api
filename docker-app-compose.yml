@@ -1,0 +1,43 @@
+version: "3.8"
+
+networks:
+  booking:
+    driver: bridge
+
+services:
+  # Applications
+
+  booking:
+    image: "booking-service"
+    container_name: "booking"
+    ports:
+      - 9001:9001
+      - 8001:8001
+    environment:
+      - SERVER_PORT=9001
+      - BPL_JVM_THREAD_COUNT=50
+      - BPL_DEBUG_ENABLED=true
+      - BPL_DEBUG_PORT=8001
+      - SPRING_KEYCLOAK_SERVER_URL=http://booking-keycloak:8080
+      - SPRING_KEYCLOAK_SERVER_EXTERNAL_URL=http://localhost:8080
+      - ZIPKIN_HOST=zipkin
+    networks:
+      - booking
+
+  gateway:
+    image: "gateway-service"
+    container_name: "gateway"
+    ports:
+      - 9000:9000
+      - 8000:8000
+    environment:
+      - SERVER_PORT=9000
+      # Buildpacks environment variable to enable debug through a socket on port 8000
+      - BPL_DEBUG_ENABLED=true
+      - BPL_DEBUG_PORT=8000
+      - BOOKING_SERVICE_URL=http://booking:9001
+      - SPRING_REDIS_HOST=booking-redis
+      - SPRING_KEYCLOAK_SERVER_URL=http://booking-keycloak:8080
+      - SPRING_KEYCLOAK_SERVER_EXTERNAL_URL=http://localhost:8080
+    networks:
+      - booking
